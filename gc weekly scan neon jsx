@@ -1,0 +1,723 @@
+import React, { useState } from "react";
+
+// ─── Growth Culture — Weekly Client Scan · Neon Dark ──────────────
+// Dark base · electric blue/cyan accents · heavy motion
+// ────────────────────────────────────────────────────────────────────
+
+const BG = "#070a0f";
+const PANEL = "rgba(255,255,255,0.035)";
+const PANEL_HI = "rgba(40,90,140,0.12)";
+const BORDER = "rgba(120,180,255,0.14)";
+const BORDER_HI = "rgba(120,200,255,0.4)";
+const TEXT = "#f0f5fa";
+const DIM = "#8da4bd";
+const FAINT = "#5a6b80";
+const BLUE = "#4db8ff";
+const CYAN = "#5ee9d8";
+const BLUE_GLOW = "rgba(77,184,255,0.6)";
+const GOOD = "#5ee9b0";
+const WATCH = "#ffd47a";
+const OFF = "#ff8a7a";
+const mono = "'JetBrains Mono', 'SF Mono', monospace";
+
+const CLIENTS = [
+  {
+    id: "gabriel", name: "Gabriel Bedikian", scanned: true, phase: "Aggressive cut · wk 5",
+    weight: { current: 69.5, deltaKg: -0.5, trend: "down" },
+    sessions: { done: 5, total: 5, cardio: "7/7 Zone 2" },
+    checkin: { submitted: false, note: "Not assigned this week" }, pbs: 13,
+    nutrition: { tracked: true, avgCal: 2616, targetCal: 2095,
+      protein: [231, 210], carbs: [293, 199], fat: [58, 51],
+      note: "Sat was a planned refeed — over-target is intentional, not a miss" },
+    nutritionSplit: {
+      training: { days: 5,
+        target: { cal: 2095, protein: 210, carbs: 199, fat: 51 },
+        actual: { cal: 2007, protein: 188, carbs: 206, fat: 48 } },
+      rest: { days: 1,
+        target: { cal: 1974, protein: 209, carbs: 172, fat: 50 },
+        actual: { cal: 1973, protein: 209, carbs: 171, fat: 50 } },
+    },
+    habits: [
+      { name: "Drink 3.7L water", rate: 77, missed: ["Tue", "Thu"] },
+      { name: "Sleep 8+ hours", rate: 79, missed: ["Wed"] },
+    ],
+    // STRICT RULE: action "up" only when BOTH sets reach the top of the range.
+    progression: [
+      { ex: "Standing Calf Raise", logged: "105kg × 12, 13", range: "8–12", action: "up" },
+      { ex: "DB Single Arm Preacher Curl", logged: "12kg × 12, 12", range: "8–12", action: "up" },
+      // Below: only the LAST set hit top of range — not both — so they wait.
+      { ex: "Leg Press", logged: "190kg × 10, 11", range: "8–12", action: "soon" },
+      { ex: "Seated Hamstring Curl", logged: "41kg × 11, 12", range: "8–12", action: "soon" },
+      { ex: "Smith Machine Shrug", logged: "55kg × 11, 12", range: "8–12", action: "soon" },
+      { ex: "Pec Deck", logged: "73kg × 10, 12", range: "8–12", action: "soon" },
+      { ex: "DB Seated OHP", logged: "14kg × 11, 12", range: "8–12", action: "soon" },
+      { ex: "Roman Chair Back Ext", logged: "15kg × 11, 12", range: "8–12", action: "soon" },
+    ],
+  },
+  {
+    id: "bailey", name: "Bailey Hoskins", scanned: true, phase: "Cut to 75kg · knee/back rehab",
+    weight: { current: 79.2, deltaKg: 0.0, trend: "flat" },
+    sessions: { done: 4, total: 5, cardio: "+ knee rehab", missed: "Fri UPPER" },
+    checkin: { submitted: false, note: "Not assigned this week" }, pbs: 0,
+    nutrition: { tracked: true, source: "Cronometer", avgCal: 1726, targetCal: 2097,
+      protein: [157, 190], carbs: [216, 195], fat: [31, 62],
+      note: "Logging daily via Cronometer. In a clean deficit — but protein low (157 vs 190) on a cut is worth addressing; fat also low." },
+    nutritionSplit: {
+      training: { days: 3,
+        target: { cal: 2169, protein: 190, carbs: 224, fat: 57 },
+        actual: { cal: 2014, protein: 191, carbs: 226, fat: 44 } },
+      rest: { days: 1,
+        target: { cal: 1918, protein: 190, carbs: 123, fat: 74 },
+        actual: { cal: 2137, protein: 198, carbs: 306, fat: 23 } },
+    },
+    habits: [
+      { name: "Drink 3.7L water", rate: 15, missed: ["most days"] },
+      { name: "Sleep 8+ hours", rate: 77, missed: ["Sun"] },
+    ],
+    progression: [
+      { ex: "Cable Lateral Raise", logged: "9kg × 15, 15", range: "8–12", action: "up" },
+      { ex: "Cable Rope OH Tricep Ext", logged: "12kg × 12, 12", range: "8–12", action: "up" },
+      { ex: "T Bar Chest Supported Row", logged: "20kg × 12, 12", range: "8–12", action: "up" },
+      { ex: "Barbell Shrug", logged: "20kg × 15, 15", range: "10–15", action: "up" },
+      { ex: "DB Single Arm Preacher Curl", logged: "9kg × 15, 15", range: "10–15", action: "up" },
+      { ex: "DB Cross Body Hammer Curls", logged: "10kg × 12, 12", range: "8–12", action: "up" },
+      { ex: "Seated Leg Extension", logged: "45kg × 15, 15", range: "8–12", action: "up" },
+      { ex: "Roman Chair Back Ext", logged: "BW 12, 12 — add load", range: "8–12", action: "up" },
+      { ex: "Seated Calf Raise", logged: "25kg × 12, 12 (self-upped)", range: "8–12", action: "up" },
+      { ex: "DB Incline Row", logged: "17.5kg × 13, 10", range: "8–12", action: "soon" },
+      { ex: "Lat Pulldown", logged: "52kg × 12, 8", range: "8–12", action: "soon" },
+      { ex: "Hip Thrust Machine", logged: "80kg × 12, 8", range: "8–12", action: "soon" },
+    ],
+    flags: ["Missed Fri UPPER session", "Hitting 15 reps on 8–12 ranges repeatedly — loads have been too light; that's why everything feels 'Moderate'", "Protein low (157 vs 190g) on a cut — flag muscle-retention risk", "Water habit 15% — effectively abandoned", "Rest day (Thu): carbs 306g vs 123g target (+149%), fat only 23g vs 74g — rest-day macros need adjusting or re-distributing"],
+    note: "Full scan: PUSH, PULL, LEGS read set-by-set. Knee rehab session excluded from progression (fixed-rep rehab work).",
+  },
+  {
+    id: "domenic", name: "Domenic Callea", scanned: true, phase: "Inactive · needs re-engagement",
+    weight: { current: 95.6, deltaKg: 0, trend: "flat" },
+    sessions: { done: 0, total: 0, cardio: "No program assigned this week" },
+    checkin: { submitted: false, note: "No check-in forms assigned" }, pbs: 0,
+    nutrition: { tracked: false, targetCal: "—", protein: [0, "—"], carbs: [0, "—"], fat: [0, "—"],
+      note: "Food journal is turned off for this client — no targets set, nothing to log." },
+    habits: [],
+    progression: [],
+    flags: [
+      "No training assigned this week (or next) — last logged workout was 56 days ago",
+      "Weight not updated since May 25 (currently 95.6kg) — overdue for a re-measure",
+      "Steps very low (avg ~4,662/day) and food journal disabled — minimal data on this client at all",
+      "No habits or check-in forms currently assigned",
+    ],
+    note: "Effectively disengaged. Recommend a check-in message before assigning a fresh program — confident output isn't possible from this little data.",
+  },
+  {
+    id: "lachlan", name: "Lachlan Watt", scanned: true, phase: "Project Juggernaut · self-coached, RIR/PB-based",
+    weight: { current: 92.9, deltaKg: -0.5, trend: "down" },
+    sessions: { done: 4, total: 5, cardio: "Sat LOWER B not yet logged (today)" },
+    checkin: { submitted: false, note: "Weekly Check-in Form due Sun 9pm — not yet submitted" }, pbs: 22,
+    nutrition: { tracked: false, targetCal: 3019, protein: [0, 170], carbs: [0, 424], fat: [0, 71],
+      note: "No food log entries since Jun 3 — Cronometer logging appears to have stopped this week." },
+    nutritionSplit: {
+      training: { days: 5,
+        target: { cal: 3274, protein: 170, carbs: 500, fat: 66 },
+        actual: null },
+      rest: { days: 2,
+        target: { cal: 2381, protein: 170, carbs: 234, fat: 85 },
+        actual: null },
+    },
+    habits: [
+      { name: "Drink 4 Litres", rate: 15, missed: ["most days"] },
+      { name: "Sleep 8+ hours (habit check)", rate: 8, missed: ["most days — but device shows 8h15m avg"] },
+    ],
+    // Program is autoregulated (RIR targets / chasing PBs), not the standard 8-12-both-sets rule.
+    // "up" here = a logged Personal Best this week.
+    progression: [
+      { ex: "Barbell High Bar Back Squat", logged: "140kg × 5 (PB, was 4)", range: "1 RIR", action: "up" },
+      { ex: "Cable V Bar Tricep Pushdown", logged: "68kg × 9, 10 (PB)", range: "RIR 0", action: "up" },
+      { ex: "Single Arm Overhead Tricep Ext", logged: "23kg × 7–9 (PB)", range: "RIR 0", action: "up" },
+      { ex: "Cable Lateral Raise", logged: "14kg × 5–7 (PB)", range: "—", action: "up" },
+      { ex: "Bayesian Cable Bicep Curl", logged: "27kg × 7–9 (PB)", range: "—", action: "up" },
+      { ex: "Neutral Grip Lat Pulldown", logged: "86kg × 8 (PB)", range: "—", action: "up" },
+      { ex: "Single Arm Lean Away KB Shrug", logged: "32kg × 20 (PB)", range: "—", action: "up" },
+      { ex: "Cable Rear Delt Fly", logged: "59kg × 13 (PB)", range: "8–12", action: "up" },
+    ],
+    flags: [
+      "22 PBs logged across 4 sessions this week — strong progression overall, incl. a 140kg×5 squat PB",
+      "Dumbbell Lateral Raise marked 'Missed' on Wed LOWER A",
+      "Nutrition logging stopped after Jun 3 — no data this week vs 3019cal/170P/424C/71F targets",
+      "'Drink 4L' and habit-tracked sleep both near-abandoned (15%/8% in June) — though wearable shows 8h15m avg sleep",
+      "Weekly Check-in Form due Sun — not yet submitted",
+    ],
+    note: "Full scan: PUSH, PULL, LOWER A, UPPER all read set-by-set. SAT (LOWER B) not yet completed.",
+    bodyMetrics: {
+      weight: { current: 92.9, weekAvg: 93.5, prevWeekAvg: 93.3, starting: 104.1, trend: "↓ 10.8% from start",
+        weeklyHistory: [
+          { week: "Jun 8–14", avg: 93.5 }, { week: "Jun 1–7", avg: 93.3 },
+          { week: "May 25–31", avg: 93.9 }, { week: "May 11–17", avg: 94 },
+        ]},
+      sleep: { weekAvg: "8h 28m", bedTime: "10:31 PM – 6:59 AM", goal: null, starting: "6h 22m",
+        daily: [
+          { date: "Jun 14", duration: "7h 37m", bed: "11:16 PM – 6:53 AM" },
+          { date: "Jun 12", duration: "8h 58m", bed: "9:50 PM – 6:48 AM" },
+          { date: "Jun 11", duration: "11h", bed: "9:09 PM – 8:09 AM" },
+          { date: "Jun 10", duration: "8h", bed: "10:21 PM – 6:21 AM" },
+          { date: "Jun 9", duration: "7h 28m", bed: "11:04 PM – 6:32 AM" },
+          { date: "Jun 8", duration: "7h 44m", bed: "11:27 PM – 7:11 AM" },
+        ]},
+      steps: { weekAvg: 4198, goal: 6000,
+        daily: [
+          { date: "Jun 8 Mon", steps: 4628 }, { date: "Jun 9 Tue", steps: 1109 },
+          { date: "Jun 10 Wed", steps: 1294 }, { date: "Jun 11 Thu", steps: 8427 },
+          { date: "Jun 12 Fri", steps: 3224 }, { date: "Jun 13 Sat", steps: 6507 },
+        ]},
+      rhr: { current: 49, weekAvg: 48, trend: "0%", range: "44–52 bpm this week" },
+      bloodPressure: { current: 118, weekAvg: 120, trend: "↓ 7.1%", note: "Range 115–125 this week" },
+      waterIntake: { current: 2250, weekAvg: 2250, unit: "ml", trend: "↓ 43.8%", note: "Below 4L target" },
+    },
+  },
+  {
+    id: "maria", name: "Maria Bedikian", scanned: true, phase: "Upper/Lower split · 4x/week",
+    weight: { current: 61.2, deltaKg: 0, trend: "flat" },
+    sessions: { done: 4, total: 4, cardio: "Sun LOWER BODY B due tomorrow" },
+    checkin: { submitted: false, note: "No check-in form assigned this week" }, pbs: 0,
+    nutrition: { tracked: false, targetCal: "—", protein: [0, "—"], carbs: [0, "—"], fat: [0, "—"],
+      note: "No macro/nutrition targets have been set up for this client yet." },
+    habits: [
+      { name: "Sleep 8+ hours", rate: 38, missed: ["Tue", "Thu", "Fri", "Sun (so far)"] },
+      { name: "Drink 2.7 Litres", rate: 0, missed: ["every day since May 28"] },
+    ],
+    progression: [
+      { ex: "Lat Pulldown", logged: "25kg × 12, 12", range: "8–12", action: "up" },
+      { ex: "Dumbbell Incline Row", logged: "8kg × 12, 12", range: "10–12", action: "up" },
+      { ex: "Cable Seated Row", logged: "25kg × 10,10,10", range: "8–12", action: "soon" },
+      { ex: "Lat Pulldown (Mon)", logged: "25kg × 10,10,10", range: "8–12", action: "soon" },
+      { ex: "Seated Hip Adduction Machine", logged: "35kg × 10,10,10", range: "8–12", action: "soon" },
+      { ex: "Standing Calf Raise Machine", logged: "30kg × 10,10,10", range: "8–12", action: "soon" },
+    ],
+    flags: [
+      "Water habit at 0% completion since May 28 — fully abandoned, worth a conversation",
+      "Weight not updated since Jan 17 (~5 months stale) — overdue for re-measure",
+      "No macro/nutrition targets set up at all — worth setting up before next scan",
+      "2 clean load increases ready: Lat Pulldown & DB Incline Row both hit top of range on both sets (Sat)",
+    ],
+    note: "Mon UPPER A, Wed LOWER A, Sat UPPER B all read set-by-set. Sun LOWER B due tomorrow.",
+  },
+];
+
+const CSS = `
+@keyframes drift { 0%{transform:translate(-50%,0) rotate(0)} 50%{transform:translate(-50%,-40px) rotate(180deg)} 100%{transform:translate(-50%,0) rotate(360deg)} }
+@keyframes drift2 { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(60px,30px) scale(1.15)} 100%{transform:translate(0,0) scale(1)} }
+@keyframes drift3 { 0%{transform:translate(0,0)} 50%{transform:translate(-50px,40px)} 100%{transform:translate(0,0)} }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+@keyframes pulseGlow { 0%,100%{box-shadow:0 0 6px var(--c)} 50%{box-shadow:0 0 16px var(--c),0 0 26px var(--c)} }
+@keyframes scanline { 0%{transform:translateX(-120%)} 100%{transform:translateX(320%)} }
+@keyframes sweep { 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes barFill { from{width:0} }
+@keyframes gridmove { 0%{background-position:0 0} 100%{background-position:44px 44px} }
+@keyframes floatUp { 0%{transform:translateY(0);opacity:0} 10%{opacity:0.7} 90%{opacity:0.7} 100%{transform:translateY(-100vh);opacity:0} }
+@keyframes twinkle { 0%,100%{opacity:0.15;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
+@keyframes borderGlow { 0%,100%{border-color:var(--bc)} 50%{border-color:var(--bch)} }
+.card-enter { animation: fadeUp 0.45s ease both; }
+.title-sweep { background:linear-gradient(90deg,#4db8ff 20%,#5ee9d8 45%,#ffffff 55%,#4db8ff 80%);
+  background-size:200% auto; -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; animation:sweep 5s linear infinite; }
+.particle { position:absolute; bottom:-10px; width:2px; height:2px; border-radius:50%;
+  background:#5ee9d8; box-shadow:0 0 6px #5ee9d8; pointer-events:none; }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important} }
+`;
+
+function Particles() {
+  const dots = Array.from({ length: 18 });
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {dots.map((_, i) => {
+        const left = (i * 53) % 100;
+        const dur = 14 + (i % 7) * 3;
+        const delay = (i % 9) * 1.6;
+        const c = i % 2 ? BLUE : CYAN;
+        return <div key={i} className="particle" style={{ left: `${left}%`,
+          background: c, boxShadow: `0 0 6px ${c}`,
+          animation: `floatUp ${dur}s linear ${delay}s infinite` }} />;
+      })}
+    </div>
+  );
+}
+
+function Starfield() {
+  // deterministic pseudo-random scatter of twinkling stars
+  const stars = Array.from({ length: 70 }).map((_, i) => {
+    const x = (i * 97 + 13) % 100;
+    const y = (i * 53 + 7) % 100;
+    const size = ((i * 7) % 3) * 0.6 + 0.7;
+    const dur = 2 + ((i * 3) % 5);
+    const delay = (i % 11) * 0.4;
+    const bright = (i % 4) === 0;
+    return { x, y, size, dur, delay, bright };
+  });
+  return (
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+      {stars.map((s, i) => (
+        <div key={i} style={{ position: "absolute", left: `${s.x}%`, top: `${s.y}%`,
+          width: s.size, height: s.size, borderRadius: "50%",
+          background: s.bright ? CYAN : "#cfe3ff",
+          boxShadow: s.bright ? `0 0 6px ${CYAN}` : `0 0 3px rgba(207,227,255,0.7)`,
+          animation: `twinkle ${s.dur}s ease-in-out ${s.delay}s infinite` }} />
+      ))}
+    </div>
+  );
+}
+
+function Pill({ children, tone, pulse }) {
+  const map = {
+    good: { fg: GOOD, bd: "rgba(94,233,176,0.4)", bg: "rgba(94,233,176,0.1)" },
+    watch: { fg: WATCH, bd: "rgba(255,212,122,0.4)", bg: "rgba(255,212,122,0.1)" },
+    off: { fg: OFF, bd: "rgba(255,138,122,0.4)", bg: "rgba(255,138,122,0.1)" },
+    blue: { fg: BLUE, bd: "rgba(77,184,255,0.4)", bg: "rgba(77,184,255,0.1)" },
+    neutral: { fg: DIM, bd: BORDER, bg: PANEL },
+  };
+  const c = map[tone] || map.neutral;
+  return (
+    <span style={{ color: c.fg, border: `1px solid ${c.bd}`, background: c.bg, fontSize: 10.5,
+      fontWeight: 600, padding: "3px 9px", borderRadius: 100, whiteSpace: "nowrap", fontFamily: mono,
+      letterSpacing: "0.02em", animation: pulse ? "pulseGlow 2s ease-in-out infinite" : "none", "--c": c.bd }}>{children}</span>
+  );
+}
+
+function Stat({ label, value, sub, tone }) {
+  const glow = tone || BLUE;
+  return (
+    <div style={{ flex: 1, minWidth: 90 }}>
+      <div style={{ fontSize: 9.5, letterSpacing: "0.14em", textTransform: "uppercase",
+        color: FAINT, fontWeight: 600, marginBottom: 6, fontFamily: mono }}>{label}</div>
+      <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 26, fontWeight: 700,
+        color: tone || TEXT, lineHeight: 1, textShadow: `0 0 18px ${glow}77` }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: DIM, marginTop: 5 }}>{sub}</div>}
+    </div>
+  );
+}
+
+function SectionLabel({ children }) {
+  return (
+    <div style={{ fontSize: 9.5, letterSpacing: "0.16em", textTransform: "uppercase",
+      color: BLUE, fontWeight: 700, marginBottom: 12, fontFamily: mono,
+      display: "flex", alignItems: "center", gap: 10 }}>
+      {children}
+      <div style={{ flex: 1, height: 1, background: BORDER, position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", width: "30%", height: 1,
+          background: `linear-gradient(90deg,transparent,${BLUE},transparent)`,
+          animation: "scanline 3s linear infinite" }} />
+      </div>
+    </div>
+  );
+}
+
+function MacroBar({ label, actual, target, unit }) {
+  const pct = Math.min((actual / target) * 100, 100);
+  const over = actual > target * 1.08, under = actual < target * 0.92;
+  const color = over ? OFF : under ? WATCH : GOOD;
+  return (
+    <div style={{ marginBottom: 11 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11.5, marginBottom: 5, fontFamily: mono }}>
+        <span style={{ color: TEXT }}>{label}</span>
+        <span style={{ color: DIM }}>{actual}<span style={{ color: FAINT }}> / {target} {unit}</span></span>
+      </div>
+      <div style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 100, overflow: "hidden" }}>
+        <div style={{ width: `${pct}%`, height: "100%",
+          background: `linear-gradient(90deg,${color},${CYAN})`, borderRadius: 100,
+          boxShadow: `0 0 12px ${color}`, animation: "barFill 1s ease both" }} />
+      </div>
+    </div>
+  );
+}
+
+function DayTypeColumn({ title, days, target, actual }) {
+  return (
+    <div style={{ flex: 1, minWidth: 220, background: "rgba(255,255,255,0.02)",
+      border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+        <span style={{ fontSize: 10.5, letterSpacing: "0.12em", textTransform: "uppercase",
+          color: CYAN, fontWeight: 700, fontFamily: mono }}>{title}</span>
+        <span style={{ fontSize: 10.5, color: FAINT, fontFamily: mono }}>{days} day{days === 1 ? "" : "s"}</span>
+      </div>
+      {actual ? (
+        <div>
+          <MacroBar label="Calories" actual={actual.cal} target={target.cal} unit="cal" />
+          <MacroBar label="Protein" actual={actual.protein} target={target.protein} unit="g" />
+          <MacroBar label="Carbs" actual={actual.carbs} target={target.carbs} unit="g" />
+          <MacroBar label="Fat" actual={actual.fat} target={target.fat} unit="g" />
+        </div>
+      ) : (
+        <div style={{ fontSize: 11.5, color: DIM }}>
+          Target: <span style={{ color: TEXT, fontFamily: mono }}>{target.cal}cal</span> ·{" "}
+          {target.protein}P / {target.carbs}C / {target.fat}F
+          <div style={{ marginTop: 8, color: WATCH }}>No meals logged{days ? ` (${days} day${days === 1 ? "" : "s"})` : ""} — nothing to compare yet.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DayTypeNutrition({ split }) {
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <SectionLabel>Training day vs rest day</SectionLabel>
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+        <DayTypeColumn title="Training days" days={split.training.days}
+          target={split.training.target} actual={split.training.actual} />
+        <DayTypeColumn title="Rest days" days={split.rest.days}
+          target={split.rest.target} actual={split.rest.actual} />
+      </div>
+    </div>
+  );
+}
+
+function MetricPair({ label, current, weekAvg, unit, currentColor }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline",
+      padding: "5px 0", borderBottom: `1px solid ${BORDER}` }}>
+      <span style={{ fontSize: 11, color: FAINT, fontFamily: mono }}>{label}</span>
+      <div style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
+        <span style={{ fontSize: 11, color: DIM, fontFamily: mono }}>
+          avg <span style={{ color: TEXT }}>{weekAvg}{unit}</span>
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: currentColor || TEXT, fontFamily: mono }}>
+          {current}{unit}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function BodyMetricsSection({ bm }) {
+  const stepsGoalColor = (steps) => steps >= bm.steps.goal ? GOOD : steps >= bm.steps.goal * 0.7 ? WATCH : OFF;
+  // calc sleep week avg from daily
+  const sleepMins = bm.sleep.daily.map(d => {
+    const [h, rest] = d.duration.split("h ");
+    const m = rest ? parseInt(rest) : 0;
+    return parseInt(h) * 60 + m;
+  });
+  const sleepAvgMins = Math.round(sleepMins.reduce((a, b) => a + b, 0) / sleepMins.length);
+  const sleepAvgStr = `${Math.floor(sleepAvgMins / 60)}h ${sleepAvgMins % 60}m`;
+
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <SectionLabel>Body metrics</SectionLabel>
+
+      {/* Row 1: Weight + Sleep */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14 }}>
+
+        {/* Weight */}
+        <div style={{ flex: 1, minWidth: 200, background: "rgba(255,255,255,0.02)",
+          border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+            color: CYAN, fontWeight: 700, fontFamily: mono, marginBottom: 10 }}>Weight</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>CURRENT</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 26, fontWeight: 700, color: TEXT }}>{bm.weight.current}<span style={{ fontSize: 13, color: DIM }}> kg</span></div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>WK AVG</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 26, fontWeight: 700, color: DIM }}>{bm.weight.weekAvg}<span style={{ fontSize: 13, color: FAINT }}> kg</span></div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: DIM, marginBottom: 4 }}>
+            Prev wk avg: <span style={{ color: TEXT }}>{bm.weight.prevWeekAvg}kg</span>
+            {" · "}Δ <span style={{ color: bm.weight.weekAvg <= bm.weight.prevWeekAvg ? GOOD : OFF }}>
+              {bm.weight.weekAvg <= bm.weight.prevWeekAvg ? "" : "+"}{(bm.weight.weekAvg - bm.weight.prevWeekAvg).toFixed(1)}kg
+            </span>
+          </div>
+          <div style={{ fontSize: 10.5, color: FAINT, fontFamily: mono }}>Started {bm.weight.starting}kg · {bm.weight.trend}</div>
+        </div>
+
+        {/* Sleep */}
+        <div style={{ flex: 1, minWidth: 220, background: "rgba(255,255,255,0.02)",
+          border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+            color: CYAN, fontWeight: 700, fontFamily: mono, marginBottom: 10 }}>Sleep</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+            <div>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>CURRENT (last night)</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 22, fontWeight: 700, color: TEXT }}>{bm.sleep.daily[0]?.duration}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>WK AVG</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 22, fontWeight: 700, color: DIM }}>{sleepAvgStr}</div>
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: DIM, marginBottom: 8 }}>Bed avg: <span style={{ color: TEXT, fontFamily: mono }}>{bm.sleep.bedTime}</span></div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {bm.sleep.daily.map(d => (
+              <div key={d.date} style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, fontFamily: mono }}>
+                <span style={{ color: FAINT }}>{d.date}</span>
+                <span style={{ color: parseInt(d.duration) >= 8 ? GOOD : WATCH }}>{d.duration}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: Steps + vitals */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+
+        {/* Steps */}
+        <div style={{ flex: 2, minWidth: 240, background: "rgba(255,255,255,0.02)",
+          border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+            color: CYAN, fontWeight: 700, fontFamily: mono, marginBottom: 10 }}>Steps · goal {bm.steps.goal.toLocaleString()}/day</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 10 }}>
+            <div>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>CURRENT (today)</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 22, fontWeight: 700,
+                color: stepsGoalColor(bm.steps.daily[bm.steps.daily.length - 1]?.steps || 0) }}>
+                {(bm.steps.daily[bm.steps.daily.length - 1]?.steps || 0).toLocaleString()}
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 9.5, color: FAINT, fontFamily: mono, marginBottom: 2 }}>WK AVG</div>
+              <div style={{ fontFamily: "Archivo, sans-serif", fontSize: 22, fontWeight: 700,
+                color: bm.steps.weekAvg >= bm.steps.goal ? GOOD : WATCH }}>
+                {bm.steps.weekAvg.toLocaleString()}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 44, marginBottom: 6 }}>
+            {bm.steps.daily.map(d => {
+              const pct = Math.min(d.steps / bm.steps.goal, 1);
+              return (
+                <div key={d.date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                  <div style={{ width: "100%", height: `${Math.max(pct * 40, 3)}px`,
+                    background: stepsGoalColor(d.steps), borderRadius: 3, opacity: 0.85 }} />
+                  <span style={{ fontSize: 8.5, color: FAINT, fontFamily: mono }}>{d.date.split(" ")[1]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Vitals column */}
+        <div style={{ flex: 1, minWidth: 160, background: "rgba(255,255,255,0.02)",
+          border: `1px solid ${BORDER}`, borderRadius: 10, padding: "12px 14px" }}>
+          <div style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
+            color: CYAN, fontWeight: 700, fontFamily: mono, marginBottom: 10 }}>Vitals</div>
+          <MetricPair label="Resting HR" current={bm.rhr.current} weekAvg={bm.rhr.weekAvg} unit=" bpm" currentColor={GOOD} />
+          <MetricPair label="Systolic BP" current={bm.bloodPressure.current} weekAvg={bm.bloodPressure.weekAvg} unit=" mmHg" currentColor={WATCH} />
+          <MetricPair label="Water intake" current={`${(bm.waterIntake.current / 1000).toFixed(2)}L`} weekAvg={`${(bm.waterIntake.weekAvg / 1000).toFixed(2)}L`} unit="" currentColor={bm.waterIntake.current >= 4000 ? GOOD : OFF} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientCard({ c, i }) {
+  const [open, setOpen] = useState(c.scanned);
+  const [hover, setHover] = useState(false);
+
+  if (!c.scanned) {
+    return (
+      <div className="card-enter" style={{ animationDelay: `${i * 0.07}s`, background: PANEL,
+        border: `1px dashed ${BORDER}`, borderRadius: 16, padding: "18px 22px", display: "flex",
+        alignItems: "center", justifyContent: "space-between", backdropFilter: "blur(10px)" }}>
+        <div style={{ fontFamily: "Archivo, sans-serif", fontWeight: 600, fontSize: 16, color: FAINT }}>{c.name}</div>
+        <Pill tone="neutral">Awaiting scan</Pill>
+      </div>
+    );
+  }
+
+  const ups = c.progression.filter((p) => p.action === "up");
+  const soon = c.progression.filter((p) => p.action === "soon");
+  const nut = c.nutrition;
+  const calDelta = nut.tracked ? nut.avgCal - nut.targetCal : 0;
+
+  return (
+    <div className="card-enter" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ animationDelay: `${i * 0.07}s`, background: open ? PANEL_HI : PANEL,
+        border: `1px solid ${open || hover ? BORDER_HI : BORDER}`, borderRadius: 16, overflow: "hidden",
+        backdropFilter: "blur(14px)", position: "relative",
+        boxShadow: open ? `0 0 50px rgba(77,184,255,0.12)` : hover ? `0 0 26px rgba(77,184,255,0.08)` : "none",
+        transition: "all 0.3s" }}>
+      {open && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, overflow: "hidden" }}>
+        <div style={{ position: "absolute", width: "35%", height: 1,
+          background: `linear-gradient(90deg,transparent,${CYAN},transparent)`,
+          animation: "scanline 3.5s linear infinite" }} /></div>}
+
+      <div onClick={() => setOpen(!open)} style={{ cursor: "pointer", padding: "18px 22px",
+        display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 7, height: 7, borderRadius: 100, background: open ? CYAN : FAINT,
+          animation: open ? "pulseGlow 2s ease-in-out infinite" : "none", "--c": BLUE_GLOW, transition: "all 0.3s" }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "Archivo, sans-serif", fontWeight: 700, fontSize: 17, color: TEXT }}>{c.name}</div>
+          <div style={{ fontSize: 11.5, color: DIM, marginTop: 2 }}>{c.phase}</div>
+        </div>
+        <div style={{ display: "flex", gap: 7, alignItems: "center" }}>
+          <Pill tone={c.sessions.done === c.sessions.total ? "good" : "off"}>{c.sessions.done}/{c.sessions.total}</Pill>
+          {ups.length > 0 && <Pill tone="blue" pulse>{ups.length} load ↑</Pill>}
+          {nut.tracked
+            ? <Pill tone={Math.abs(calDelta) > 300 ? "off" : "good"}>{calDelta > 0 ? "+" : ""}{calDelta}cal</Pill>
+            : <Pill tone="watch">no food log</Pill>}
+        </div>
+        <div style={{ color: BLUE, fontSize: 16, transform: open ? "rotate(90deg)" : "none", transition: "transform 0.3s" }}>›</div>
+      </div>
+
+      {open && (
+        <div style={{ padding: "4px 22px 24px" }}>
+          <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginBottom: 26, paddingTop: 18,
+            borderTop: `1px solid ${BORDER}` }}>
+            <Stat label="Weight" value={`${c.weight.current}`} sub={`${c.weight.deltaKg > 0 ? "+" : ""}${c.weight.deltaKg}kg · 7d`}
+              tone={c.weight.trend === "down" ? GOOD : c.weight.trend === "flat" ? WATCH : null} />
+            <Stat label="Sessions" value={`${c.sessions.done}/${c.sessions.total}`}
+              sub={c.sessions.missed ? `missed ${c.sessions.missed}` : c.sessions.cardio}
+              tone={c.sessions.done < c.sessions.total ? OFF : null} />
+            <Stat label="PBs" value={c.pbs} sub="this week" tone={c.pbs > 0 ? CYAN : null} />
+            <Stat label="Check-in" value={c.checkin.submitted ? c.checkin.difficulty : "—"} sub={c.checkin.note} />
+          </div>
+
+          {c.flags && c.flags.length > 0 && (
+            <div style={{ marginBottom: 26 }}>
+              <SectionLabel>Flags</SectionLabel>
+              {c.flags.map((f, k) => (
+                <div key={k} style={{ fontSize: 12.5, color: OFF, padding: "4px 0",
+                  display: "flex", gap: 8, alignItems: "baseline" }}>
+                  <span>▸</span>{f}</div>
+              ))}
+            </div>
+          )}
+
+          {c.bodyMetrics && <BodyMetricsSection bm={c.bodyMetrics} />}
+
+          <div style={{ marginBottom: 26 }}>
+            <SectionLabel>Load increase · top of range, both sets ({ups.length})</SectionLabel>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 18px" }}>
+              {ups.map((p) => (
+                <div key={p.ex} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                  padding: "6px 0", borderBottom: "1px solid rgba(120,180,255,0.08)" }}>
+                  <span style={{ fontSize: 13, color: TEXT }}>{p.ex}</span>
+                  <span style={{ fontSize: 11, color: BLUE, fontFamily: mono }}>{p.logged}</span>
+                </div>
+              ))}
+            </div>
+            {soon.length > 0 && (
+              <div style={{ marginTop: 12, fontSize: 11.5, color: DIM }}>
+                <span style={{ color: WATCH, fontFamily: mono, fontWeight: 600 }}>WATCH </span>
+                {soon.map((p) => p.ex).join(", ")} — one more session.
+              </div>
+            )}
+          </div>
+
+          {c.nutritionSplit ? (
+            <DayTypeNutrition split={c.nutritionSplit} />
+          ) : (
+          <div style={{ marginBottom: 26 }}>
+            <SectionLabel>Nutrition vs target · 7d avg</SectionLabel>
+            {nut.tracked ? (
+              <div>
+                <MacroBar label="Calories" actual={nut.avgCal} target={nut.targetCal} unit="cal" />
+                <MacroBar label="Protein" actual={nut.protein[0]} target={nut.protein[1]} unit="g" />
+                <MacroBar label="Carbs" actual={nut.carbs[0]} target={nut.carbs[1]} unit="g" />
+                <MacroBar label="Fat" actual={nut.fat[0]} target={nut.fat[1]} unit="g" />
+                {nut.note && <div style={{ marginTop: 12, fontSize: 11.5, color: WATCH,
+                  border: "1px solid rgba(255,212,122,0.25)", background: "rgba(255,212,122,0.06)",
+                  padding: "9px 12px", borderRadius: 9 }}>⚑ {nut.note}</div>}
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: 12.5, color: DIM, marginBottom: 10 }}>
+                  Targets set — {nut.targetCal}cal · {nut.protein[1]}P / {nut.carbs[1]}C / {nut.fat[1]}F — but no meals logged this week.
+                </div>
+                {nut.note && <div style={{ fontSize: 11.5, color: WATCH,
+                  border: "1px solid rgba(255,212,122,0.25)", background: "rgba(255,212,122,0.06)",
+                  padding: "9px 12px", borderRadius: 9 }}>⚑ {nut.note}</div>}
+              </div>
+            )}
+          </div>
+          )}
+
+          <div>
+            <SectionLabel>Habits</SectionLabel>
+            {c.habits.map((h) => (
+              <div key={h.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0" }}>
+                <span style={{ fontSize: 13, color: TEXT }}>{h.name}</span>
+                <div style={{ display: "flex", gap: 9, alignItems: "center" }}>
+                  {h.missed.length > 0 && <span style={{ fontSize: 11, color: OFF, fontFamily: mono }}>missed {h.missed.join(", ")}</span>}
+                  <Pill tone={h.rate >= 85 ? "good" : h.rate >= 70 ? "watch" : "off"}>{h.rate}%</Pill>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function App() {
+  const scanned = CLIENTS.filter((c) => c.scanned).length;
+  return (
+    <div style={{ minHeight: "100vh", background: BG, padding: "0 0 60px",
+      fontFamily: "Inter, sans-serif", position: "relative", overflow: "hidden" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+      <style>{CSS}</style>
+
+      {/* animated grid floor */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", opacity: 0.5,
+        backgroundImage: `linear-gradient(rgba(77,184,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(77,184,255,0.05) 1px,transparent 1px)`,
+        backgroundSize: "44px 44px", animation: "gridmove 12s linear infinite",
+        maskImage: "radial-gradient(ellipse at 50% 0%, black, transparent 70%)",
+        WebkitMaskImage: "radial-gradient(ellipse at 50% 0%, black, transparent 70%)" }} />
+
+      {/* moving blooms */}
+      <div style={{ position: "absolute", top: -180, left: "50%", width: 760, height: 440,
+        background: "radial-gradient(ellipse, rgba(77,184,255,0.16), transparent 70%)",
+        pointerEvents: "none", animation: "drift 20s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", bottom: 80, right: -120, width: 460, height: 460,
+        background: "radial-gradient(circle, rgba(94,233,216,0.12), transparent 70%)",
+        pointerEvents: "none", animation: "drift2 16s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", top: 300, left: -100, width: 380, height: 380,
+        background: "radial-gradient(circle, rgba(77,184,255,0.1), transparent 70%)",
+        pointerEvents: "none", animation: "drift3 19s ease-in-out infinite" }} />
+
+      <Starfield />
+      <Particles />
+
+      <div style={{ position: "relative", maxWidth: 940, margin: "0 auto", padding: "36px 28px 8px" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase",
+              color: BLUE, fontWeight: 600, fontFamily: mono, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 6, height: 6, borderRadius: 100, background: CYAN,
+                boxShadow: `0 0 8px ${CYAN}`, animation: "pulse 1.8s infinite", display: "inline-block" }} />Growth Culture · live</div>
+            <div className="title-sweep" style={{ fontFamily: "Archivo, sans-serif", fontSize: 32, fontWeight: 800, marginTop: 6 }}>
+              Weekly Client Scan</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 11.5, color: DIM, fontFamily: mono }}>Jun 8–14 · 2026</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600, color: TEXT, marginTop: 4 }}>{scanned}/{CLIENTS.length} scanned</div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ position: "relative", maxWidth: 940, margin: "0 auto", padding: "20px 28px 8px" }}>
+        <div style={{ border: `1px solid ${BORDER}`, background: PANEL, borderRadius: 12, padding: "13px 18px",
+          fontSize: 12.5, color: DIM, display: "flex", gap: 22, flexWrap: "wrap", backdropFilter: "blur(10px)",
+          position: "relative", overflow: "hidden", "--bc": BORDER, "--bch": BORDER_HI,
+          animation: "borderGlow 4s ease-in-out infinite" }}>
+          <span style={{ color: CYAN, fontFamily: mono, fontSize: 10.5, letterSpacing: "0.1em", textTransform: "uppercase" }}>Actions</span>
+          <span>Gabriel — 2 load increases · on track</span>
+          <span>Bailey — 9 load increases (loads too light), low protein, missed session</span>
+          <span>Lachlan — huge week, 22 PBs incl. 140kg squat · nutrition stopped, check-in due</span>
+          <span>Maria — 2 load increases ready · water habit at 0%, stale weight, no macro targets</span>
+          <span>Domenic — inactive, no program assigned · needs re-engagement message</span>
+        </div>
+      </div>
+
+      <div style={{ position: "relative", maxWidth: 940, margin: "0 auto", padding: "12px 28px",
+        display: "flex", flexDirection: "column", gap: 12 }}>
+        {CLIENTS.map((c, i) => <ClientCard key={c.id} c={c} i={i} />)}
+      </div>
+
+      <div style={{ position: "relative", maxWidth: 940, margin: "0 auto", padding: "10px 28px",
+        fontSize: 10.5, color: FAINT, textAlign: "center", fontFamily: mono, letterSpacing: "0.05em" }}>
+        EVERFIT · BODY METRICS / EXERCISE METRICS / TRAINING HISTORY / CHECK-INS / MEAL PLAN / TASKS
+      </div>
+    </div>
+  );
+}
